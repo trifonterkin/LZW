@@ -26,40 +26,62 @@ public class LZWClass {
         Scanner in1 = new Scanner(new File("file.txt"));
         PrintWriter out1 = new PrintWriter("outputFile.txt");
         decompress(in1,out1);
+
+        /*для проверки запомним исходное сообщение*/
+        Scanner in3 = new Scanner(new File("inputFile.txt"));
+
+        String inputString = in3.next();
+
+
+        /*для проверки запомним получившееся сообщение*/
+        Scanner in2 = new Scanner(new File("outputFile.txt"));
+        String outString = in2.next();
+        if (inputString.equals(outString)) System.out.println("Проверка проёдена. Строки совпадают");
+            else System.out.println("Проверка не проёдена. Строки не совпадают");
     }
 
     public static void compress(Scanner in, PrintWriter out) {
         String inputString;
         String subString ="";
-        String subSubString;
+        String partToOutput;
 
-        ArrayList<String> strings = new ArrayList<>();
+        /*Заполняется начальный словарь*/
+
+        ArrayList<String> dictionary = new ArrayList<>();
         Character endOfMessage = '#';
-        strings.add(endOfMessage.toString());
+        dictionary.add(endOfMessage.toString());
         for (Character i = 'a'; i <= 'z'; i++) {
-            strings.add(i.toString());
+            dictionary.add(i.toString());
         }
+        /*Читается кодируемое сообщение*/
+
         inputString = in.next();
+
+        /*инициализируются переменные, задающие границы кодируемых подстрок*/
         int i1 = 0;
         int i2 = i1+2;
+
         while (!subString.endsWith("#")) {
             subString = inputString.substring(i1, i2);
-            if (strings.contains(subString)) i2++;
+            if (dictionary.contains(subString)) i2++;
             else {
-                strings.add(subString);
-                subSubString = inputString.substring(i1, i2-1);
-                //out.print(String.format("%5s", Integer.toBinaryString(strings.indexOf(subSubString))).replace(' ','0'));
-                out.print(strings.indexOf(subSubString)+" ");
+                dictionary.add(subString);
+                /*выделяется правая часть кодируемой подстроки*/
+                partToOutput = inputString.substring(i1, i2-1);
+                //out.print(String.format("%5s", Integer.toBinaryString(dictionary.indexOf(partToOutput))).replace(' ','0'));\
+
+                /*на выход записывается номер в словаре правой части кодируемой подстроки*/
+                out.print(dictionary.indexOf(partToOutput)+" ");
                 i1=i1+subString.length()-1;
                 i2=i1+2;
             }
         }
         out.close();
 
-
+        /*На консоль выводится весь словарь*/
         System.out.println("___________СЛОВАРЬ____________________");
-        strings.forEach(x-> {
-            System.out.println(x +"     "+Integer.toString(strings.indexOf(x),10 ));
+        dictionary.forEach(x-> {
+            System.out.println(x +"     "+Integer.toString(dictionary.indexOf(x),10 ));
         });
 
     }
@@ -67,39 +89,49 @@ public class LZWClass {
     public static void decompress(Scanner in,PrintWriter out) {
         String subString;
         String subSubString;
-        ArrayList<String> strings = new ArrayList<>();
+
+        /*Заполняется начальный словарь*/
+        ArrayList<String> dictionary = new ArrayList<>();
         Character endOfMessage = '#';
-        strings.add(endOfMessage.toString());
+        dictionary.add(endOfMessage.toString());
         for (Character i = 'a'; i <= 'z'; i++) {
-            strings.add(i.toString());
+            dictionary.add(i.toString());
         }
 
+        /*читается первый закодированный элемент, это будет один символ из начального словаря*/
         String first = in.next();
-        out.print(extract(strings,first));
+        /*подаётся на вывод раскодированный первый символ, используется вспомогательный метод extract*/
+        out.print(extract(dictionary,first));
+
         while (in.hasNext()) {
+
+            /*читается следующий элемент для составления подстрок для заполнения словаря*/
             String second = in.next();
-            subString = extract(strings,first) + extract(strings,second);
-            if (strings.contains(subString)) out.print(extract(strings, second));
-            else {
-                out.print(extract(strings, second));
-                subSubString = extract(strings, first) + extract(strings, second).charAt(0);
-                strings.add(subSubString);
+
+            /*подстрока состоит из левой части и первого символа правой части. Она добавляется в словарь*/
+            subString = extract(dictionary, first) + extract(dictionary, second).charAt(0);
+            dictionary.add(subString);
+            /*на выход подаётся правая часть польностью*/
+                out.print(extract(dictionary, second));
+                /*второй прочитанный закодированный элемент на каждой итерации становится
+                * первым для следующей итерации*/
                 first = second;
-            }
 
         }
+        /*по завершении цикла на вывод подаётся символ конца сообщения*/
         out.print(endOfMessage);
-
         out.close();
+
+        /*На консоль выводится весь словарь*/
         System.out.println("___________СЛОВАРЬ______________________");
-        strings.forEach(x-> {
-            System.out.println(x +"     "+Integer.toString(strings.indexOf(x),10 ));
+        dictionary.forEach(x-> {
+            System.out.println(x +"     "+Integer.toString(dictionary.indexOf(x),10 ));
         });
 
     }
-
-    public static String extract(ArrayList<String> strings,String number) {
-        return strings.get(Integer.parseInt(number));
+    /*вспомогательный метод для извлечения из словаря элемента по номеру в словаре*/
+    public static String extract(ArrayList<String> dictionary,String number) {
+        return dictionary.get(Integer.parseInt(number));
     }
 }
 
