@@ -7,11 +7,22 @@ import java.util.Scanner;
  */
 public class LZWClass {
     public static void main(String[] args) throws FileNotFoundException {
+
+        /*Для того, чтобы не морочиться с вводом путей к файлам используются
+        стандартные из папки с проектом
+        inputFile.txt - исходное сообщение
+        file.txt - закодированное сообщение
+        outputFile.txt - разкодированное сообщение*/
+
+
         System.out.println("___________COMPRESS___________________");
+
         Scanner in = new Scanner(new File("inputFile.txt"));
         PrintWriter out = new PrintWriter("file.txt");
         compress(in, out);
+
         System.out.println("___________DECOMPRESS___________________");
+
         Scanner in1 = new Scanner(new File("file.txt"));
         PrintWriter out1 = new PrintWriter("outputFile.txt");
         decompress(in1,out1);
