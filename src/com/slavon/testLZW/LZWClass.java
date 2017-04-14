@@ -1,6 +1,11 @@
 package com.slavon.testLZW;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,7 +24,7 @@ public class LZWClass {
         outputFile.txt - разкодированное сообщение*/
 
 
-        System.out.println("___________COMPRESS_V1__________________");
+        /*System.out.println("___________COMPRESS_V1__________________");
         long startTime = System.currentTimeMillis();
         try (Scanner in = new Scanner(new File("inputFile.txt")); PrintWriter out = new PrintWriter("file.txt");) {
             compress(in, out);
@@ -40,30 +45,52 @@ public class LZWClass {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
+*/
 
         System.out.println("___________COMPRESS_V4___________________");
         long startTimeV2 = System.currentTimeMillis();
-        try (FileInputStream in = new FileInputStream("inputFile.txt");PrintWriter out=new PrintWriter("file.txt")) {
+        Path CompressPath = Paths.get("file.txt");
+        try (//FileInputStream in = new FileInputStream("inputFile.txt");
+             BufferedReader in = new BufferedReader(
+                     new InputStreamReader(
+                             new FileInputStream("inputFile.txt"), StandardCharsets.UTF_8));
+             //FileOutputStream out=new FileOutputStream("file.txt"))
+                /*BufferedWriter out = new BufferedWriter(
+                        new OutputStreamWriter(
+                                new FileOutputStream("file.txt"), StandardCharsets.UTF_8))*/
+                PrintWriter out = new PrintWriter(Files.newBufferedWriter(CompressPath, StandardCharsets.UTF_8))
+        )
+
+        {
             compressV4(in,out);
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
         long timeV2 = System.currentTimeMillis() - startTimeV2;
         System.out.println("Четвёртый вариант"+ timeV2);
 
 
-        System.out.println("___________DECOMPRESS___________________");
+        System.out.println("___________DECOMPRESS_V2__________________");
+        Path DecompressPath = Paths.get("file.txt");
+        Path OutPutPath = Paths.get("outputFile.txt");
+        try (Scanner in = new Scanner(DecompressPath,"UTF-8");
+             PrintWriter out = new PrintWriter(Files.newBufferedWriter(OutPutPath, StandardCharsets.UTF_8))) {
 
-        try (Scanner in1 = new Scanner(new File("file.txt")); PrintWriter out1 = new PrintWriter("outputFile.txt");) {
-            decompress(in1, out1);
+            decompressV2(in, out);
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        System.out.println("___________COMPRESS_V5___________________");
+        /*System.out.println("___________COMPRESS_V5___________________");
         long startTimeV5 = System.currentTimeMillis();
-        try (FileInputStream in = new FileInputStream("inputFile.txt");PrintWriter out=new PrintWriter("file.txt")) {
+        try (FileInputStream in = new FileInputStream("inputFile.txt");FileOutputStream out=new FileOutputStream("file.txt")) {
             compressV5(in,out);
         } catch (IOException e) {
             e.printStackTrace();
@@ -74,19 +101,21 @@ public class LZWClass {
 
         System.out.println("___________DECOMPRESS___________________");
 
-        try (Scanner in1 = new Scanner(new File("file.txt")); PrintWriter out1 = new PrintWriter("outputFile.txt");) {
-            decompress(in1, out1);
+        try (FileInputStream in = new FileInputStream("file.txt");FileOutputStream out=new FileOutputStream("outputFile.txt")) {
+
+            decompressV2(in, out);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        }
-
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
         /*для проверки запомним исходное сообщение*//*
         Scanner in3 = new Scanner(new File("inputFile.txt"));
 
         String inputString = in3.next();
 
 
-        *//*для проверки запомним получившееся сообщение*//*
+        /*для проверки запомним получившееся сообщение*//*
         Scanner in2 = new Scanner(new File("outputFile.txt"));
         String outString = in2.next();
         if (inputString.equals(outString)) System.out.println("Проверка пройдена. Строки совпадают");
@@ -94,27 +123,31 @@ public class LZWClass {
     }
 
 
-    public static void compressV4(FileInputStream in, PrintWriter out) throws IOException {
+    public static void compressV4(BufferedReader in, PrintWriter out) throws IOException {
 
+        String lineSeparator = System.lineSeparator();
         Map<String , String> dictionary = new HashMap<>();
-        Character endOfMessage = '#';
-        dictionary.put(endOfMessage.toString(), endOfMessage.toString());
-        for (Character i = 'a'; i <= 'z'; i++) {
 
+        Character enterCharacter = '\n';
+        dictionary.put(enterCharacter.toString(), enterCharacter.toString());
+
+        for (Character i = '\u0020'; i <= '\u007E'; i++) {
             dictionary.put(i.toString(), i.toString());
-            i++;
-
         }
+
         Integer k = 1;
         Map<String  , Integer> dictionaryReserved = new HashMap<>();
-        dictionaryReserved.put(endOfMessage.toString(),0);
-        for (Character i = 'a'; i <= 'z'; i++) {
+        dictionaryReserved.put(enterCharacter.toString(), 0);
+        for (Character i = '\u0020'; i <= '\u007E'; i++) {
 
             dictionaryReserved.put(i.toString(),k);
             k=k+1;
         }
         k = k - 1;
-
+        System.out.println("вывод словаря");
+        dictionary.forEach((x, y) -> System.out.println(x + "   " + y));
+        dictionaryReserved.forEach((x, y) -> System.out.println(x + "   " + y));
+        System.out.println("словарь закончился");
 
         int i = -1;
         Character firstCharacter =(char) in.read();
@@ -122,23 +155,30 @@ public class LZWClass {
 
         while ((i= in.read())!=-1) {
             secondCharacter =(char) i;
-
+            /*if (secondCharacter.toString().equals(lineSeparator)){
+                out.write(Character.LINE_SEPARATOR);
+                System.out.println("должна быть новая строкаВНЕШН");
+            }*/
             String dictionaryWord = firstCharacter.toString() + secondCharacter.toString();
             if (dictionary.containsKey(dictionaryWord)) {
                 while (dictionary.containsKey(dictionaryWord)) {
                     secondCharacter = (char) in.read();
+                   /* if (secondCharacter.toString().equals(lineSeparator)){
+                        out.write(Character.LINE_SEPARATOR);
+                        System.out.println("должна быть новая строкаВНУТР");
+                    }*/
                     dictionaryWord = dictionaryWord + secondCharacter.toString();
                 }
 
                 dictionary.put(dictionaryWord, dictionaryWord);
                 dictionaryReserved.put(dictionaryWord,k=k+1);
 
-                out.print(dictionaryReserved.get(dictionaryWord.substring(0,dictionaryWord.length()-1).toString())+" ");
+                out.print((int)dictionaryReserved.get(dictionaryWord.substring(0,dictionaryWord.length()-1))+" ");
                 firstCharacter = secondCharacter;
             } else {
                 dictionary.put(dictionaryWord, dictionaryWord);
                 dictionaryReserved.put(dictionaryWord, k=k+1);
-                out.print(dictionaryReserved.get(dictionaryWord.substring(0,dictionaryWord.length()-1).toString())+" ");
+                out.print((int)dictionaryReserved.get(dictionaryWord.substring(0,dictionaryWord.length()-1))+" ");
                 firstCharacter = secondCharacter;
             }
         }
@@ -148,7 +188,7 @@ public class LZWClass {
 
     }
 
-    public static void compressV5(FileInputStream in, PrintWriter out) throws IOException {
+    public static void compressV5(FileInputStream in, FileOutputStream out) throws IOException {
         class Pair {
             private String val;
             private int number;
@@ -204,15 +244,15 @@ public class LZWClass {
                     dictionaryString = dictionaryString + secondCharacter;
                 }
                 dictionary.put(dictionaryString, new Pair(dictionaryString, k++));
-                out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber()+" ");
+                out.write(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber());
                 firstCharacter = secondCharacter;
             } else {
                 dictionary.put(dictionaryString, new Pair(dictionaryString, k++));
-                out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber() + " ");
+                out.write(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber());
                 firstCharacter = secondCharacter;
             }
         }
-        out.print(dictionary.get(secondCharacter.toString()).getNumber());
+        out.write(dictionary.get(secondCharacter.toString()).getNumber());
 
     }
 
@@ -259,6 +299,44 @@ public class LZWClass {
 
     }
 
+    public static void decompressV2(Scanner in, PrintWriter out) {
+
+        Map<String , String> dictionary = new HashMap<>();
+        Character enterCharacter = '\n';
+        dictionary.put(enterCharacter.toString(), enterCharacter.toString());
+
+        for (Character i = '\u0020'; i <= '\u007E'; i++) {
+            dictionary.put(i.toString(), i.toString());
+        }
+
+        Integer k = 1;
+        Map<Integer  , String> dictionaryReserved = new HashMap<>();
+        dictionaryReserved.put(0, enterCharacter.toString());
+
+        for (Character i = '\u0020'; i <= '\u007E'; i++) {
+
+            dictionaryReserved.put(k,i.toString());
+            k=k+1;
+        }
+        int first = in.nextInt();
+        out.print(dictionaryReserved.get(first));
+        int second;
+        String subString;
+        while (in.hasNext()) {
+            second = in.nextInt();
+            out.print(dictionaryReserved.get(second));
+            subString = dictionaryReserved.get(first) + dictionaryReserved.get(second).substring(0,1);
+
+            dictionary.put(subString, subString);
+            dictionaryReserved.put(k++, subString);
+            first = second;
+
+        }
+
+
+
+    }
+
 
     public static void decompress(Scanner in,PrintWriter out) {
         String subString;
@@ -266,14 +344,13 @@ public class LZWClass {
 
         /*Заполняется начальный словарь*/
         ArrayList<String> dictionary = new ArrayList<>();
-        Character endOfMessage = '#';
-        dictionary.add(endOfMessage.toString());
-        for (Character i = 'a'; i <= 'z'; i++) {
+        for (Character i = '\u0020'; i <= '\u007F'; i++) {
             dictionary.add(i.toString());
         }
 
         /*читается первый закодированный элемент, это будет один символ из начального словаря*/
         String first = in.next();
+
         /*подаётся на вывод раскодированный первый символ, используется вспомогательный метод extract*/
         out.print(extract(dictionary,first));
 
