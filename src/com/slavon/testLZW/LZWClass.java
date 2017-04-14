@@ -139,10 +139,6 @@ public class LZWClass {
             k=k+1;
         }
         k = k - 1;
-        System.out.println("вывод словаря");
-        dictionary.forEach((x, y) -> System.out.println(x + "   " + y));
-        dictionaryReserved.forEach((x, y) -> System.out.println(x + "   " + y));
-        System.out.println("словарь закончился");
 
         int i = -1;
         Character firstCharacter =(char) in.read();
@@ -150,18 +146,10 @@ public class LZWClass {
 
         while ((i= in.read())!=-1) {
             secondCharacter =(char) i;
-            /*if (secondCharacter.toString().equals(lineSeparator)){
-                out.write(Character.LINE_SEPARATOR);
-                System.out.println("должна быть новая строкаВНЕШН");
-            }*/
             String dictionaryWord = firstCharacter.toString() + secondCharacter.toString();
             if (dictionary.containsKey(dictionaryWord)) {
                 while (dictionary.containsKey(dictionaryWord)) {
                     secondCharacter = (char) in.read();
-                   /* if (secondCharacter.toString().equals(lineSeparator)){
-                        out.write(Character.LINE_SEPARATOR);
-                        System.out.println("должна быть новая строкаВНУТР");
-                    }*/
                     dictionaryWord = dictionaryWord + secondCharacter.toString();
                 }
 
@@ -298,12 +286,6 @@ public class LZWClass {
 
         Map<String , String> dictionary = new HashMap<>();
         Character enterCharacter = '\n';
-        dictionary.put(enterCharacter.toString(), enterCharacter.toString());
-
-        for (Character i = '\u0020'; i <= '\u007E'; i++) {
-            dictionary.put(i.toString(), i.toString());
-        }
-
         Integer k = 1;
         Map<Integer  , String> dictionaryReserved = new HashMap<>();
         dictionaryReserved.put(0, enterCharacter.toString());
@@ -328,7 +310,7 @@ public class LZWClass {
 
         }
 
-
+        System.out.println("decompressed");
 
     }
 
