@@ -50,14 +50,9 @@ public class LZWClass {
         System.out.println("___________COMPRESS_V4___________________");
         long startTimeV2 = System.currentTimeMillis();
         Path CompressPath = Paths.get("file.txt");
-        try (//FileInputStream in = new FileInputStream("inputFile.txt");
-             BufferedReader in = new BufferedReader(
+        try (BufferedReader in = new BufferedReader(
                      new InputStreamReader(
                              new FileInputStream("inputFile.txt"), StandardCharsets.UTF_8));
-             //FileOutputStream out=new FileOutputStream("file.txt"))
-                /*BufferedWriter out = new BufferedWriter(
-                        new OutputStreamWriter(
-                                new FileOutputStream("file.txt"), StandardCharsets.UTF_8))*/
                 PrintWriter out = new PrintWriter(Files.newBufferedWriter(CompressPath, StandardCharsets.UTF_8))
         )
 
