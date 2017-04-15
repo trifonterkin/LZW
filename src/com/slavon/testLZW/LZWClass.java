@@ -120,25 +120,23 @@ public class LZWClass {
 
     public static void compressV4(BufferedReader in, PrintWriter out) throws IOException {
 
-        String lineSeparator = System.lineSeparator();
         Map<String , String> dictionary = new HashMap<>();
 
         Character enterCharacter = '\n';
+        //Character enterCharacter =(char) Character.LINE_SEPARATOR;
         dictionary.put(enterCharacter.toString(), enterCharacter.toString());
 
         for (Character i = '\u0020'; i <= '\u007E'; i++) {
             dictionary.put(i.toString(), i.toString());
         }
 
-        Integer k = 1;
+        Integer k = 0;
         Map<String  , Integer> dictionaryReserved = new HashMap<>();
         dictionaryReserved.put(enterCharacter.toString(), 0);
         for (Character i = '\u0020'; i <= '\u007E'; i++) {
-
-            dictionaryReserved.put(i.toString(),k);
             k=k+1;
+            dictionaryReserved.put(i.toString(),k);
         }
-        k = k - 1;
 
         int i = -1;
         Character firstCharacter =(char) in.read();
@@ -165,8 +163,9 @@ public class LZWClass {
                 firstCharacter = secondCharacter;
             }
         }
-        out.print(dictionaryReserved.get(secondCharacter.toString()));
-
+        if ((dictionaryReserved.get(secondCharacter.toString()) != null)) {
+            out.print(dictionaryReserved.get(secondCharacter.toString()));
+        }
 
 
     }
@@ -284,16 +283,15 @@ public class LZWClass {
 
     public static void decompressV2(Scanner in, PrintWriter out) {
 
-        Map<String , String> dictionary = new HashMap<>();
         Character enterCharacter = '\n';
-        Integer k = 1;
+        Integer k = 0;
         Map<Integer  , String> dictionaryReserved = new HashMap<>();
-        dictionaryReserved.put(0, enterCharacter.toString());
+        dictionaryReserved.put(k, enterCharacter.toString());
 
         for (Character i = '\u0020'; i <= '\u007E'; i++) {
-
-            dictionaryReserved.put(k,i.toString());
             k=k+1;
+            dictionaryReserved.put(k,i.toString());
+
         }
         int first = in.nextInt();
         out.print(dictionaryReserved.get(first));
@@ -301,13 +299,21 @@ public class LZWClass {
         String subString;
         while (in.hasNext()) {
             second = in.nextInt();
-            out.print(dictionaryReserved.get(second));
-            subString = dictionaryReserved.get(first) + dictionaryReserved.get(second).substring(0,1);
+            if (!dictionaryReserved.containsKey(second)) {
+                k = k + 1;
+                dictionaryReserved.put(second, dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
+                out.print(dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
+                first = second;
 
-            dictionary.put(subString, subString);
-            dictionaryReserved.put(k++, subString);
-            first = second;
+            }
+            else {
+                out.print(dictionaryReserved.get(second));
+                subString = dictionaryReserved.get(first) + dictionaryReserved.get(second).substring(0, 1);
+                k = k + 1;
+                dictionaryReserved.put(k, subString);
 
+                first = second;
+            }
         }
 
         System.out.println("decompressed");
