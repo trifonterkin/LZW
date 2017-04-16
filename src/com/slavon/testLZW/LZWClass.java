@@ -134,26 +134,31 @@ public class LZWClass {
         int i = -1;
         Character firstCharacter =(char) in.read();
         Character secondCharacter=' ';
+        try {
 
-        while ((i= in.read())!=-1) {
-            secondCharacter =(char) i;
-            String dictionaryWord = firstCharacter.toString() + secondCharacter.toString();
-            if (dictionary.containsKey(dictionaryWord)) {
-                while (dictionary.containsKey(dictionaryWord)) {
-                    secondCharacter = (char) in.read();
-                    dictionaryWord = dictionaryWord + secondCharacter.toString();
+
+            while ((i = in.read()) != -1) {
+                secondCharacter = (char) i;
+                String dictionaryWord = firstCharacter.toString() + secondCharacter.toString();
+                if (dictionary.containsKey(dictionaryWord)) {
+                    while (dictionary.containsKey(dictionaryWord)) {
+                        secondCharacter = (char) in.read();
+                        dictionaryWord = dictionaryWord + secondCharacter.toString();
+                    }
+
+                    dictionary.put(dictionaryWord, dictionaryWord);
+                    dictionaryReserved.put(dictionaryWord, k = k + 1);
+                    out.print((int) dictionaryReserved.get(dictionaryWord.substring(0, dictionaryWord.length() - 1)) + " ");
+                    firstCharacter = secondCharacter;
+                } else {
+                    dictionary.put(dictionaryWord, dictionaryWord);
+                    dictionaryReserved.put(dictionaryWord, k = k + 1);
+                    out.print((int) dictionaryReserved.get(dictionaryWord.substring(0, dictionaryWord.length() - 1)) + " ");
+                    firstCharacter = secondCharacter;
                 }
-
-                dictionary.put(dictionaryWord, dictionaryWord);
-                dictionaryReserved.put(dictionaryWord,k=k+1);
-                out.print((int)dictionaryReserved.get(dictionaryWord.substring(0,dictionaryWord.length()-1))+" ");
-                firstCharacter = secondCharacter;
-            } else {
-                dictionary.put(dictionaryWord, dictionaryWord);
-                dictionaryReserved.put(dictionaryWord, k=k+1);
-                out.print((int)dictionaryReserved.get(dictionaryWord.substring(0,dictionaryWord.length()-1))+" ");
-                firstCharacter = secondCharacter;
             }
+        } catch (NullPointerException e) {
+            throw new IOException("ОБНАРУЖЕН СИМВОЛ НЕ ИЗ СЛОВАРЯ",e);
         }
         if ((dictionaryReserved.get(secondCharacter.toString()) != null)) {
             out.print(dictionaryReserved.get(secondCharacter.toString()));
@@ -173,25 +178,28 @@ public class LZWClass {
         Character firstCharacter =(char) in.read();
         Character secondCharacter = ' ';
         String dictionaryString;
-
-        while ((i = in.read()) != -1) {
-            secondCharacter = (char) i;
-            dictionaryString = firstCharacter.toString() + secondCharacter.toString();
-            if (dictionary.containsKey(dictionaryString)) {
-                while (dictionary.containsKey(dictionaryString)) {
-                    secondCharacter =(char) in.read();
-                    dictionaryString = dictionaryString + secondCharacter.toString();
+        try {
+            while ((i = in.read()) != -1) {
+                secondCharacter = (char) i;
+                dictionaryString = firstCharacter.toString() + secondCharacter.toString();
+                if (dictionary.containsKey(dictionaryString)) {
+                    while (dictionary.containsKey(dictionaryString)) {
+                        secondCharacter = (char) in.read();
+                        dictionaryString = dictionaryString + secondCharacter.toString();
+                    }
+                    k = k + 1;
+                    dictionary.put(dictionaryString, new Pair(dictionaryString, k));
+                    out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber() + " ");
+                    firstCharacter = secondCharacter;
+                } else {
+                    k = k + 1;
+                    dictionary.put(dictionaryString, new Pair(dictionaryString, k));
+                    out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber() + " ");
+                    firstCharacter = secondCharacter;
                 }
-                k = k + 1;
-                dictionary.put(dictionaryString, new Pair(dictionaryString, k));
-                out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber()+" ");
-                firstCharacter = secondCharacter;
-            } else {
-                k = k + 1;
-                dictionary.put(dictionaryString, new Pair(dictionaryString, k));
-                out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber()+" ");
-                firstCharacter = secondCharacter;
             }
+        } catch (NullPointerException e) {
+            throw new IOException("ОБНАРУЖЕН СИМВОЛ НЕ ИЗ СЛОВАРЯ", e);
         }
         if ((dictionary.get(secondCharacter.toString())!= null)) {
 
@@ -253,24 +261,25 @@ public class LZWClass {
         out.print(dictionaryReserved.get(first));
         int second;
         String subString;
-        while (in.hasNext()) {
-            second = in.nextInt();
-            if (!dictionaryReserved.containsKey(second)) {
-                k = k + 1;
-                dictionaryReserved.put(second, dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
-                out.print(dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
-                first = second;
 
-            }
-            else {
-                out.print(dictionaryReserved.get(second));
-                subString = dictionaryReserved.get(first) + dictionaryReserved.get(second).substring(0, 1);
-                k = k + 1;
-                dictionaryReserved.put(k, subString);
+            while (in.hasNext()) {
+                second = in.nextInt();
+                if (!dictionaryReserved.containsKey(second)) {
+                    k = k + 1;
+                    dictionaryReserved.put(second, dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
+                    out.print(dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
+                    first = second;
 
-                        first = second;
+                } else {
+                    out.print(dictionaryReserved.get(second));
+                    subString = dictionaryReserved.get(first) + dictionaryReserved.get(second).substring(0, 1);
+                    k = k + 1;
+                    dictionaryReserved.put(k, subString);
+
+                    first = second;
+                }
             }
-        }
+
 
         System.out.println("decompressed");
 
