@@ -1,5 +1,7 @@
 package com.slavon.testLZW;
 
+import jdk.internal.util.xml.impl.Pair;
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -24,7 +26,7 @@ public class LZWClass {
         outputFile.txt - разкодированное сообщение*/
 
 
-        /*System.out.println("___________COMPRESS_V1__________________");
+        System.out.println("___________COMPRESS_V1__________________");
         long startTime = System.currentTimeMillis();
         try (Scanner in = new Scanner(new File("inputFile.txt")); PrintWriter out = new PrintWriter("file.txt");) {
             compress(in, out);
@@ -38,21 +40,20 @@ public class LZWClass {
         System.out.println("первый вариант "+time);
 
 
-        System.out.println("___________DECOMPRESS___________________");
+        System.out.println("___________DECOMPRESS_V1__________________");
 
         try (Scanner in1 = new Scanner(new File("file.txt")); PrintWriter out1 = new PrintWriter("outputFile.txt");) {
             decompress(in1, out1);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-*/
 
         System.out.println("___________COMPRESS_V4___________________");
         long startTimeV2 = System.currentTimeMillis();
         Path CompressPath = Paths.get("file.txt");
         try (BufferedReader in = new BufferedReader(
                      new InputStreamReader(
-                             new FileInputStream("inputFile.txt"), StandardCharsets.UTF_8));
+                             new FileInputStream("big.txt"), StandardCharsets.UTF_8));
                 PrintWriter out = new PrintWriter(Files.newBufferedWriter(CompressPath, StandardCharsets.UTF_8))
         )
 
@@ -67,7 +68,7 @@ public class LZWClass {
 
 
         long timeV2 = System.currentTimeMillis() - startTimeV2;
-        System.out.println("Четвёртый вариант"+ timeV2);
+        System.out.println("Четвёртый вариант внешний таймер"+ timeV2);
 
 
         System.out.println("___________DECOMPRESS_V2__________________");
@@ -83,60 +84,52 @@ public class LZWClass {
             e.printStackTrace();
         }
 
-        /*System.out.println("___________COMPRESS_V5___________________");
+        System.out.println("___________COMPRESS_V5___________________");
         long startTimeV5 = System.currentTimeMillis();
-        try (FileInputStream in = new FileInputStream("inputFile.txt");FileOutputStream out=new FileOutputStream("file.txt")) {
+        try (BufferedReader in = new BufferedReader(
+                new InputStreamReader(
+                        new FileInputStream("big.txt"), StandardCharsets.UTF_8));
+             PrintWriter out = new PrintWriter(Files.newBufferedWriter(CompressPath, StandardCharsets.UTF_8))
+        )
+
+        {
             compressV5(in,out);
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         long timeV5 = System.currentTimeMillis() - startTimeV5;
-        System.out.println("Пятый вариант"+ timeV5);
+        System.out.println("Пятый вариант внешний таймер"+ timeV5);
 
 
-        System.out.println("___________DECOMPRESS___________________");
-
-        try (FileInputStream in = new FileInputStream("file.txt");FileOutputStream out=new FileOutputStream("outputFile.txt")) {
+        System.out.println("___________DECOMPRESS_V2__________________");
+        try (Scanner in = new Scanner(DecompressPath,"UTF-8");
+             PrintWriter out = new PrintWriter(Files.newBufferedWriter(OutPutPath, StandardCharsets.UTF_8))) {
 
             decompressV2(in, out);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
-        /*для проверки запомним исходное сообщение*//*
-        Scanner in3 = new Scanner(new File("inputFile.txt"));
+        }
 
-        String inputString = in3.next();
-
-
-        /*для проверки запомним получившееся сообщение*//*
-        Scanner in2 = new Scanner(new File("outputFile.txt"));
-        String outString = in2.next();
-        if (inputString.equals(outString)) System.out.println("Проверка пройдена. Строки совпадают");
-            else System.out.println("Проверка не пройдена. Строки не совпадают");*/
     }
 
 
     public static void compressV4(BufferedReader in, PrintWriter out) throws IOException {
 
+        long startTimeV2 = System.currentTimeMillis();
         Map<String , String> dictionary = new HashMap<>();
 
-        Character enterCharacter = '\n';
-        //Character enterCharacter =(char) Character.LINE_SEPARATOR;
-        dictionary.put(enterCharacter.toString(), enterCharacter.toString());
-
-        for (Character i = '\u0020'; i <= '\u007E'; i++) {
-            dictionary.put(i.toString(), i.toString());
-        }
-
-        Integer k = 0;
         Map<String  , Integer> dictionaryReserved = new HashMap<>();
-        dictionaryReserved.put(enterCharacter.toString(), 0);
-        for (Character i = '\u0020'; i <= '\u007E'; i++) {
-            k=k+1;
-            dictionaryReserved.put(i.toString(),k);
-        }
+
+        dictionaryFillingStringString(dictionary);
+
+        Integer k = dictionaryFillingStringInteger(dictionaryReserved);
+
 
         int i = -1;
         Character firstCharacter =(char) in.read();
@@ -153,7 +146,6 @@ public class LZWClass {
 
                 dictionary.put(dictionaryWord, dictionaryWord);
                 dictionaryReserved.put(dictionaryWord,k=k+1);
-
                 out.print((int)dictionaryReserved.get(dictionaryWord.substring(0,dictionaryWord.length()-1))+" ");
                 firstCharacter = secondCharacter;
             } else {
@@ -166,75 +158,48 @@ public class LZWClass {
         if ((dictionaryReserved.get(secondCharacter.toString()) != null)) {
             out.print(dictionaryReserved.get(secondCharacter.toString()));
         }
-
+        long timeV2 = System.currentTimeMillis() - startTimeV2;
+        System.out.println("Четвёртый вариант"+ timeV2);
 
     }
 
-    public static void compressV5(FileInputStream in, FileOutputStream out) throws IOException {
-        class Pair {
-            private String val;
-            private int number;
-
-            public Pair(String val, int number) {
-                this.val = val;
-                this.number = number;
-            }
-
-            public String getVal() {
-                return val;
-            }
-
-            public void setVal(String val) {
-                this.val = val;
-            }
-
-            public int getNumber() {
-                return number;
-            }
-
-            public void setNumber(int number) {
-                this.number = number;
-            }
-
-            @Override
-            public String toString() {
-                return "Pair{" +
-                        "val='" + val + '\'' +
-                        ", number=" + number +
-                        '}';
-            }
-        }
-
+    public static void compressV5(BufferedReader in, PrintWriter out) throws IOException {
+        long startTimeV5 = System.currentTimeMillis();
         Map<String, Pair> dictionary = new HashMap<String, Pair>();
-        Character endOfMessage = '#';
-        dictionary.put(endOfMessage.toString(), new Pair(endOfMessage.toString(), 0));
-        Integer k = 1;
-        for (Character i = 'a'; i <= 'z'; i++) {
-            dictionary.put(i.toString(), new Pair(i.toString(), k));
-            k++;
-        }
+
+        Integer k = dictionaryFillingStringPair(dictionary);
+
         int i = -1;
         Character firstCharacter =(char) in.read();
         Character secondCharacter = ' ';
         String dictionaryString;
+
         while ((i = in.read()) != -1) {
             secondCharacter = (char) i;
             dictionaryString = firstCharacter.toString() + secondCharacter.toString();
             if (dictionary.containsKey(dictionaryString)) {
                 while (dictionary.containsKey(dictionaryString)) {
                     secondCharacter =(char) in.read();
-                    dictionaryString = dictionaryString + secondCharacter;
+                    dictionaryString = dictionaryString + secondCharacter.toString();
                 }
-                dictionary.put(dictionaryString, new Pair(dictionaryString, k++));
-                out.write(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber());
+                k = k + 1;
+                dictionary.put(dictionaryString, new Pair(dictionaryString, k));
+                out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber()+" ");
                 firstCharacter = secondCharacter;
             } else {
-                dictionary.put(dictionaryString, new Pair(dictionaryString, k++));
-                out.write(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber());
+                k = k + 1;
+                dictionary.put(dictionaryString, new Pair(dictionaryString, k));
+                out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber()+" ");
                 firstCharacter = secondCharacter;
             }
         }
-        out.write(dictionary.get(secondCharacter.toString()).getNumber());
+        if ((dictionary.get(secondCharacter.toString())!= null)) {
+
+
+            out.print(dictionary.get(secondCharacter.toString()).getNumber());
+        }
+        long timeV5 = System.currentTimeMillis() - startTimeV5;
+        System.out.println("Пятый вариант"+ timeV5);
 
     }
 
@@ -282,17 +247,8 @@ public class LZWClass {
     }
 
     public static void decompressV2(Scanner in, PrintWriter out) {
-
-        Character enterCharacter = '\n';
-        Integer k = 0;
         Map<Integer  , String> dictionaryReserved = new HashMap<>();
-        dictionaryReserved.put(k, enterCharacter.toString());
-
-        for (Character i = '\u0020'; i <= '\u007E'; i++) {
-            k=k+1;
-            dictionaryReserved.put(k,i.toString());
-
-        }
+        Integer k = dictionaryFillingIntegerString(dictionaryReserved);
         int first = in.nextInt();
         out.print(dictionaryReserved.get(first));
         int second;
@@ -312,7 +268,7 @@ public class LZWClass {
                 k = k + 1;
                 dictionaryReserved.put(k, subString);
 
-                first = second;
+                        first = second;
             }
         }
 
@@ -353,12 +309,122 @@ public class LZWClass {
 
         }
         out.close();
-
+        System.out.println("decompressed");
 
     }
     /*вспомогательный метод для извлечения из словаря элемента по номеру в словаре*/
     public static String extract(ArrayList<String> dictionary,String number) {
         return dictionary.get(Integer.parseInt(number));
+    }
+
+    public static void dictionaryFillingStringString(Map<String, String> dictionary) {
+        Character enterCharacter = '\n';
+        dictionary.put(enterCharacter.toString(), enterCharacter.toString());
+
+        for (Character i = '\u0020'; i <= '\u007E'; i++) {
+            dictionary.put(i.toString(), i.toString());
+        }
+        for (Character i = '\u2012'; i <= '\u201F'; i++) {
+            dictionary.put(i.toString(), i.toString());
+        }
+        for (Character i = '\u0080'; i <= '\u00FF'; i++) {
+            dictionary.put(i.toString(), i.toString());
+        }
+    }
+
+    public static Integer dictionaryFillingStringInteger(Map<String, Integer> dictionary) {
+        Integer k = 0;
+        Character enterCharacter = '\n';
+        dictionary.put(enterCharacter.toString(), 0);
+        for (Character i = '\u0020'; i <= '\u007E'; i++) {
+            k = k + 1;
+            dictionary.put(i.toString(), k);
+        }
+        for (Character i = '\u2012'; i <= '\u201F'; i++) {
+            k = k + 1;
+            dictionary.put(i.toString(), k);
+        }
+        for (Character i = '\u0080'; i <= '\u00FF'; i++) {
+            k = k + 1;
+            dictionary.put(i.toString(), k);
+        }
+        return k;
+    }
+
+    public static Integer dictionaryFillingIntegerString(Map<Integer, String> dictionary) {
+        Character enterCharacter = '\n';
+        Integer k = 0;
+        dictionary.put(0, enterCharacter.toString());
+        for (Character i = '\u0020'; i <= '\u007E'; i++) {
+            k=k+1;
+            dictionary.put(k,i.toString());
+        }
+        for (Character i = '\u2012'; i <= '\u201F'; i++) {
+            k = k + 1;
+            dictionary.put(k,i.toString());
+        }
+        for (Character i = '\u0080'; i <= '\u00FF'; i++) {
+            k=k+1;
+            dictionary.put(k,i.toString());
+        }
+
+        return k;
+
+    }
+
+    public static Integer dictionaryFillingStringPair(Map<String, Pair> dictionary) {
+        Character enterCharacter = '\n';
+        dictionary.put(enterCharacter.toString(), new Pair(enterCharacter.toString(), 0));
+        Integer k = 0;
+        for (Character i = '\u0020'; i <= '\u007E'; i++) {
+            k = k + 1;
+            dictionary.put(i.toString(), new Pair(i.toString(), k));
+        }
+        for (Character i = '\u2012'; i <= '\u201F'; i++) {
+            k = k + 1;
+            dictionary.put(i.toString(),new Pair(i.toString(), k));
+        }
+        for (Character i = '\u0080'; i <= '\u00FF'; i++) {
+            k=k+1;
+            dictionary.put(i.toString(),new Pair(i.toString(), k));
+        }
+
+        return k;
+
+    }
+
+   static class Pair {
+        private String val;
+        private int number;
+
+        public Pair(String val, int number) {
+            this.val = val;
+            this.number = number;
+        }
+
+        public String getVal() {
+            return val;
+        }
+
+        public void setVal(String val) {
+            this.val = val;
+        }
+
+        public int getNumber() {
+            return number;
+        }
+
+        public void setNumber(int number) {
+            this.number = number;
+        }
+
+        @Override
+        public String toString() {
+            return "Pair{" +
+                    "val='" + val + '\'' +
+                    ", number=" + number +
+                    '}';
+        }
     }
 
 }
