@@ -26,31 +26,27 @@ public class LZWClass {
         outputFile.txt - разкодированное сообщение*/
 
 
-
         System.out.println("___________COMPRESS_V4___________________");
         Path CompressPath = Paths.get("file.txt");
         try (BufferedReader in = new BufferedReader(
-                     new InputStreamReader(
-                             new FileInputStream("big.txt"), StandardCharsets.UTF_8));
-                PrintWriter out = new PrintWriter(Files.newBufferedWriter(CompressPath, StandardCharsets.UTF_8))
+                new InputStreamReader(
+                        new FileInputStream("big.txt"), StandardCharsets.UTF_8));
+             PrintWriter out = new PrintWriter(Files.newBufferedWriter(CompressPath, StandardCharsets.UTF_8))
         )
 
         {
             CompressV4 compressV4 = new CompressV4();
-            compressV4.compress(in,out);
+            compressV4.compress(in, out);
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
 
-
         System.out.println("___________DECOMPRESS_V2__________________");
         Path DecompressPath = Paths.get("file.txt");
         Path OutPutPath = Paths.get("outputFile.txt");
-        try (Scanner in = new Scanner(DecompressPath,"UTF-8");
+        try (Scanner in = new Scanner(DecompressPath, "UTF-8");
              PrintWriter out = new PrintWriter(Files.newBufferedWriter(OutPutPath, StandardCharsets.UTF_8))) {
 
             decompressV2(in, out);
@@ -69,30 +65,55 @@ public class LZWClass {
 
         {
             CompressV5 compressV5 = new CompressV5();
-            compressV5.compress(in,out);
+            compressV5.compress(in, out);
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
 
-
         System.out.println("___________DECOMPRESS_V2__________________");
-        try (Scanner in = new Scanner(DecompressPath,"UTF-8");
+        try (Scanner in = new Scanner(DecompressPath, "UTF-8");
              PrintWriter out = new PrintWriter(Files.newBufferedWriter(OutPutPath, StandardCharsets.UTF_8))) {
 
             decompressV2(in, out);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
+    public static void decompressV2(Scanner in, PrintWriter out) {
+        Map<Integer  , String> dictionaryReserved = new HashMap<>();
+        Integer k = compressInterface.dictionaryFillingIntegerString(dictionaryReserved);
+        int first = in.nextInt();
+        out.print(dictionaryReserved.get(first));
+        int second;
+        String subString;
 
-    static class CompressV4 implements compressInterface {
+        while (in.hasNext()) {
+            second = in.nextInt();
+            if (!dictionaryReserved.containsKey(second)) {
+                k = k + 1;
+                dictionaryReserved.put(second, dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
+                out.print(dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
+                first = second;
+
+            } else {
+                out.print(dictionaryReserved.get(second));
+                subString = dictionaryReserved.get(first) + dictionaryReserved.get(second).substring(0, 1);
+                k = k + 1;
+                dictionaryReserved.put(k, subString);
+
+                first = second;
+            }
+        }
+
+
+        System.out.println("decompressed");
+
+    }
+}
+     class CompressV4 implements compressInterface {
 
         @Override
         public void compress(BufferedReader in, PrintWriter out) throws IOException {
@@ -107,7 +128,7 @@ public class LZWClass {
             Integer k = compressInterface.dictionaryFillingStringInteger(dictionaryReserved);
 
 
-            int i = -1;
+            int i;
             Character firstCharacter =(char) in.read();
             Character secondCharacter=' ';
             try {
@@ -145,33 +166,45 @@ public class LZWClass {
         }
     }
 
-    static class CompressV5 implements compressInterface {
+        class CompressV5 implements compressInterface {
 
         @Override
         public void compress(BufferedReader in, PrintWriter out) throws IOException {
+            /*переменная таймера*/
             long startTimeV5 = System.currentTimeMillis();
+            /*Словарь*/
             Map<String, Pair> dictionary = new HashMap<String, Pair>();
-
+            /*Начальное заполнение словаря статическим методом интерфейса*/
             Integer k = compressInterface.dictionaryFillingStringPair(dictionary);
-
+            /*Основная часть*/
             int i = -1;
             Character firstCharacter =(char) in.read();
             Character secondCharacter = ' ';
             String dictionaryString;
             try {
+                /*пока не конец файла читаем новые символы*/
                 while ((i = in.read()) != -1) {
                     secondCharacter = (char) i;
+                    /*составляем строку, которую возможно поместим в словарь*/
                     dictionaryString = firstCharacter.toString() + secondCharacter.toString();
+                    /*проверяем есть ли она уже в словаре*/
                     if (dictionary.containsKey(dictionaryString)) {
+                        /*если есть, то читаем новые символы и обновляем строку, которую должны занести в словарь
+                        * до тех пор пока строка будет не из словаря*/
                         while (dictionary.containsKey(dictionaryString)) {
                             secondCharacter = (char) in.read();
                             dictionaryString = dictionaryString + secondCharacter.toString();
                         }
+                        /*затем добавляем строку в словарь с номером к+1*/
                         k = k + 1;
                         dictionary.put(dictionaryString, new Pair(dictionaryString, k));
+                        /*Номер записи словаря со строкой без последнего символа помещаем в выходной файл*/
                         out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber() + " ");
+                        /*для следующей итерации последний символ данной итерации должен стать первым следующей*/
                         firstCharacter = secondCharacter;
-                    } else {
+
+                    } else {/*если строка не из словаря помещаем её в словарь и в выходной файл записываем
+                    номер записи словаря со строкой без последнего символа*/
                         k = k + 1;
                         dictionary.put(dictionaryString, new Pair(dictionaryString, k));
                         out.print(dictionary.get(dictionaryString.substring(0, dictionaryString.length() - 1)).getNumber() + " ");
@@ -183,7 +216,6 @@ public class LZWClass {
             }
             if ((dictionary.get(secondCharacter.toString())!= null)) {
 
-
                 out.print(dictionary.get(secondCharacter.toString()).getNumber());
             }
             long timeV5 = System.currentTimeMillis() - startTimeV5;
@@ -191,7 +223,9 @@ public class LZWClass {
         }
     }
 
-
+/*Интерфейс классов-реализаций сжатия с абстрактным методом compress
+* статическими методами начального заполнения словаря для классов CompressV4 и CompressV5
+* и статическим классом Pair, используемым в реализации абстрактного метода compress в классе CompressV5*/
     interface compressInterface {
         abstract void compress(BufferedReader in, PrintWriter out) throws IOException;
 
@@ -273,7 +307,7 @@ public class LZWClass {
             private String val;
             private int number;
 
-            public Pair(String val, int number) {
+            Pair(String val, int number) {
                 this.val = val;
                 this.number = number;
             }
@@ -302,38 +336,4 @@ public class LZWClass {
                         '}';
             }
         }
-
-    }
-
-
-    public static void decompressV2(Scanner in, PrintWriter out) {
-        Map<Integer  , String> dictionaryReserved = new HashMap<>();
-        Integer k = compressInterface.dictionaryFillingIntegerString(dictionaryReserved);
-        int first = in.nextInt();
-        out.print(dictionaryReserved.get(first));
-        int second;
-        String subString;
-
-            while (in.hasNext()) {
-                second = in.nextInt();
-                if (!dictionaryReserved.containsKey(second)) {
-                    k = k + 1;
-                    dictionaryReserved.put(second, dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
-                    out.print(dictionaryReserved.get(first) + dictionaryReserved.get(first).substring(0, 1));
-                    first = second;
-
-                } else {
-                    out.print(dictionaryReserved.get(second));
-                    subString = dictionaryReserved.get(first) + dictionaryReserved.get(second).substring(0, 1);
-                    k = k + 1;
-                    dictionaryReserved.put(k, subString);
-
-                    first = second;
-                }
-            }
-
-
-        System.out.println("decompressed");
-
-    }
 }
